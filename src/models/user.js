@@ -8,10 +8,12 @@ const userSchema = new mongoose.Schema({
         type: String,
     },
     emailId : {
-        type : String
+        type : String,
+        unique: true
     },
     password : {
-        type : String
+        type : String,
+       
     },
     age: {
         type : Number
@@ -21,7 +23,7 @@ const userSchema = new mongoose.Schema({
     }
 })
 
-const userModel = mongoose.model('User', userSchema)
+const userModel = mongoose.model('User1', userSchema)
 
 module.exports = {
     userModel
