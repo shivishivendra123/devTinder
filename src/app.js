@@ -2,14 +2,16 @@ const express = require('express')
 const mongoose = require('mongoose')
 const app = express()
 const { userModel } = require('./models/user')
-
+const { validateSignUpData } = require('./utils/validator')
+const bcrypt = require('bcryptjs')
+const cookieParser = require('cookie-parser')
 // Route Order matters
 const { Schema } = mongoose
 
 const { connect_db } = require('./config/database')
 
 app.use(express.json())
-
+app.use(cookieParser())
 
 app.get('/',(req,res)=>{
     res.json({
@@ -40,7 +42,7 @@ app.post('/v1/signup',async(req,res)=>{
 
     const { firstName , lastName , emailId , password , age , gender} = req.body
 
-    const userObjfromReq = {
+    let userObjfromReq = {
         firstName : firstName,
         lastName : lastName,
         emailId : emailId,
@@ -60,15 +62,45 @@ app.post('/v1/signup',async(req,res)=>{
         gender : 'Male'
     }
 
-    const user = new userModel(userObjfromReq)
-    await user.save()
-    console.log("User Created")
-    res.status(200).json({
-        message:"User Created"
-    })
+    try{
+        
+        validateSignUpData(req)
+
+        var password_enc = await bcrypt.hash(password,10)
+        console.log(password_enc)
+
+        userObjfromReq = {
+            firstName : firstName,
+            lastName : lastName,
+            emailId : emailId,
+            password : password_enc,
+            age: age,
+            gender : gender
+        }
+
+        const user = new userModel(userObjfromReq)
+        await user.save()
+        console.log("User Created")
+        res.status(200).json({
+            message:"User Created"
+        })  
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).json({
+            message: err.message
+        })
+    }
+    
+    
 })
 
 app.get('/v1/users',async(req,res)=>{
+
+    const cookies = req.cookies
+    console.log(cookies)
+
+
     const all_users = await userModel.find({})
     
     try{
@@ -88,13 +120,101 @@ app.get('/v1/users',async(req,res)=>{
 app.get('/v1/getbyemail',async(req,res)=>{
 
     const {email} = req.body
+    try{
+        const userByEmail = await userModel.findOne({ emailId : email})
+        console.log(userByEmail)
+        res.status(200).json(
+            userByEmail
+        )
+    }
+    
+    catch(err){
+        res.send({
+            message:"Not a valid email address"
+        })
+    }
+    
+})
 
-    const userByEmail = await userModel.findOne({ emailId : email})
+app.get('/v1/deleteUserById',async(req,res)=>{
+    const { id } = req.body
 
-    console.log(userByEmail)
-    res.status(200).json(
-        userByEmail
-    )
+    await userModel.deleteOne({ _id:id })
+
+    res.status(200).json({
+        message: `The use with userid ${ id} is deleted`
+    })
+})
+
+app.patch('/v1/findByIDandUpdate',async(req,res)=>{
+    const { userId }  = req.body
+
+    const data  = req.body
+
+    ALLOWED_UPDATES = [
+        'userID',
+        'photoURL',
+        'about',
+        'gender',
+        'age',
+        'skills'
+    ]
+
+    const isUpdateAllowed = Object.keys(data).every((k)=>ALLOWED_UPDATES.includes(k))
+
+    if(!isUpdateAllowed){
+        res.send({
+            message: "Update Not allowed"
+        })
+    }
+
+    try{
+        await userModel.findByIdAndUpdate(userId,{ firstName: "Harry" })
+        res.status(200).json({
+            message:"User Updated Successfully"
+        })
+    }
+    
+    catch(err){
+        console.error(err)
+        res.status(500).json({
+            message:"Internal Server Error"
+        })
+    }
+
+})
+
+app.post('/v1/signIn',async(req,res)=>{
+   const  { email , password } = req.body
+   try{
+    const user_cred = await userModel.findOne({emailId:email})
+    console.log(password)
+    if(!user_cred){
+        res.send({
+            message:"Invalid Username"
+        })
+    }
+    if(await bcrypt.compare(password,user_cred.password)){
+        console.log("Auth Success")
+
+        res.cookie("token","jahbakbfakbvckahbjvc",{httpOnly: true})
+        res.send({
+            user_cred
+        })
+    }else{
+        res.send({
+            message:"Wrong Password"
+        })
+    }
+    
+   }
+    catch(err){
+        console.log(err.message)
+        res.send({
+            message:err.message
+        })
+    }
+
 })
 
 connect_db().then(()=>{
