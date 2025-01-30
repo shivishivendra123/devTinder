@@ -5,6 +5,8 @@ const { userModel } = require('./models/user')
 const { validateSignUpData } = require('./utils/validator')
 const bcrypt = require('bcryptjs')
 const cookieParser = require('cookie-parser')
+const jwt = require('jsonwebtoken')
+const { auth_request } = require('./middlewares/authorize')
 // Route Order matters
 const { Schema } = mongoose
 
@@ -12,6 +14,8 @@ const { connect_db } = require('./config/database')
 
 app.use(express.json())
 app.use(cookieParser())
+
+
 
 app.get('/',(req,res)=>{
     res.json({
@@ -95,11 +99,7 @@ app.post('/v1/signup',async(req,res)=>{
     
 })
 
-app.get('/v1/users',async(req,res)=>{
-
-    const cookies = req.cookies
-    console.log(cookies)
-
+app.get('/v1/users',auth_request,async(req,res)=>{
 
     const all_users = await userModel.find({})
     
@@ -117,7 +117,7 @@ app.get('/v1/users',async(req,res)=>{
 
 })
 
-app.get('/v1/getbyemail',async(req,res)=>{
+app.get('/v1/getbyemail',auth_request,async(req,res)=>{
 
     const {email} = req.body
     try{
@@ -186,6 +186,7 @@ app.patch('/v1/findByIDandUpdate',async(req,res)=>{
 
 app.post('/v1/signIn',async(req,res)=>{
    const  { email , password } = req.body
+
    try{
     const user_cred = await userModel.findOne({emailId:email})
     console.log(password)
@@ -197,7 +198,17 @@ app.post('/v1/signIn',async(req,res)=>{
     if(await bcrypt.compare(password,user_cred.password)){
         console.log("Auth Success")
 
-        res.cookie("token","jahbakbfakbvckahbjvc",{httpOnly: true})
+        const date = new Date()
+
+        const data = {
+            email: email,
+            issued_at: date 
+        }
+
+        const token = jwt.sign(data,"cgajvcjavcuv")
+        console.log(token)
+
+        res.cookie("token",token,{httpOnly: true})
         res.send({
             user_cred
         })
