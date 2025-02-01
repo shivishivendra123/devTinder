@@ -12,7 +12,7 @@ const auth_request = (req,res,next)=>{
                 message:err
             })
         }else{
-            console.log(user)
+            req.user = user._id
             next()
         }
     })
