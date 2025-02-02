@@ -12,6 +12,7 @@ requestsRouter.use(cookieParser())
 
 requestsRouter.post('/v1/request/send/:status/:requestId',auth_request,async(req,res)=>{
     const {requestId,status} = req.params
+
     const userId = req.user
     
     
@@ -35,22 +36,6 @@ requestsRouter.post('/v1/request/send/:status/:requestId',auth_request,async(req
             })
             return
         }
-
-        // if(connect_history.length >0 && connect_history[0].status != status){
-        //     let Updated_connection_obj = {
-        //         _id: connect_history._id,
-        //         fromUserId: userId,
-        //         toUserId:requestId,
-        //         status:status
-        //     }
-
-        //     Updated_connection_obj = new ConnectionReqModel(Updated_connection_obj)
-        //     await Updated_connection_obj.save()
-        //     res.send({
-        //         mesaage: "New Request sent"
-        //     })
-        //     return
-        // }
 
         if(!['interested','ignore'].includes(status)){
             throw new Error("Invalid status type")
@@ -80,6 +65,28 @@ requestsRouter.post('/v1/request/send/:status/:requestId',auth_request,async(req
 })
 
 
+requestsRouter.post('/v1/request/review/:status/:requestId',auth_request,async(req,res)=>{
+    const  userId  = req.user
+
+    const { status , requestId } = req.params
+
+    console.log(userId)
+    console.log(requestId)
+    try{
+        const findConnectionRequest = await ConnectionReqModel.findOne({ _id : requestId , toUserId : userId})
+        if(findConnectionRequest && findConnectionRequest.status == 'interested'){
+            const ret  = await ConnectionReqModel.findByIdAndUpdate(requestId,{status:status})
+            res.send({
+                mesaage:"Connection request accepted"
+            })
+        }else{
+            throw new Error("Invalid Request")
+        }
+    }
+    catch(err){
+        res.send(`${err.message} `)
+    }
+})
 
 module.exports = {
     requestsRouter
