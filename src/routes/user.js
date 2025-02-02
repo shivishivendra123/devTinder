@@ -36,13 +36,32 @@ userRouter.get('/v1/user/connections',auth_request,async(req,res)=>{
     const user = req.user
 
     try{
-        const requests = await ConnectionReqModel.find({toUserId:user,status:"accepted"}).populate(
+        const requests = await ConnectionReqModel.find({
+            $or:[
+                {toUserId:user,status:"accepted"},
+                {fromUserId:user,status:"accepted"}
+            ]
+        } 
+        ).populate(
             "fromUserId","firstName lastName"
-        )
+        ).populate("toUserId","firstName lastName")
+
+
+        const data = requests.map((request,index)=>{
+            if(request.fromUserId._id.equals(user)){
+                return request.toUserId
+            }else{
+                console.log('No')
+                console.log(request.fromUserId._id)
+                return request.fromUserId
+            }
+        })
+        
+        console.log(data)
 
         if(requests.length>0){
             res.send({
-                requests
+                data
             })
                 
         }else{
