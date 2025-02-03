@@ -5,7 +5,7 @@ const { userModel } = require('./models/user')
 const cookieParser = require('cookie-parser')
 const { auth_request } = require('./middlewares/authorize')
 const { profileRouter } = require('./routes/profile')
-
+const cors = require('cors')
 const { authRouter } = require('./routes/auth')
 
 const { requestsRouter } = require('./routes/requests')
@@ -17,7 +17,10 @@ const { userRouter } = require('./routes/user')
 
 app.use(express.json())
 app.use(cookieParser())
-
+app.use(cors({
+    origin:'http://localhost:5173',
+    credentials: true
+}))
 app.use('/',authRouter)
 app.use('/',profileRouter)
 app.use('/',requestsRouter)
