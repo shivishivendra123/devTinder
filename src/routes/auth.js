@@ -12,7 +12,7 @@ authRouter.use(cookieParser())
 
 authRouter.post('/v1/signup',async(req,res)=>{
 
-    const { firstName , lastName , emailId , password , age , gender} = req.body
+    const { firstName , lastName , emailId , password , age , gender,about,skills} = req.body
 
     let userObjfromReq = {
         firstName : firstName,
@@ -20,7 +20,8 @@ authRouter.post('/v1/signup',async(req,res)=>{
         emailId : emailId,
         password : password,
         age: age,
-        gender : gender
+        gender : gender,
+        about:about,
     }
 
     console.log(userObjfromReq)
@@ -41,13 +42,15 @@ authRouter.post('/v1/signup',async(req,res)=>{
         var password_enc = await bcrypt.hash(password,10)
         console.log(password_enc)
 
-        userObjfromReq = {
+        let userObjfromReq = {
             firstName : firstName,
             lastName : lastName,
             emailId : emailId,
             password : password_enc,
             age: age,
-            gender : gender
+            gender : gender,
+            about:about,
+            skills:skills
         }
 
         const user = new userModel(userObjfromReq)
@@ -75,9 +78,7 @@ authRouter.post('/v1/signIn',async(req,res)=>{
      const user_cred = await userModel.findOne({emailId:email})
      console.log(password)
      if(!user_cred){
-         res.send({
-             message:"Invalid Username"
-         })
+         throw new Error("iNVALID USER NAME OR PASSWORD")
      }
      if(await bcrypt.compare(password,user_cred.password)){
          console.log("Auth Success")
@@ -92,15 +93,13 @@ authRouter.post('/v1/signIn',async(req,res)=>{
              user_cred
          })
      }else{
-         res.send({
-             message:"Wrong Password"
-         })
+         throw new Error("Invalid Username or password")
      }
      
     }
      catch(err){
          console.log(err.message)
-         res.send({
+         res.status(400).send({
              message:err.message
          })
      }

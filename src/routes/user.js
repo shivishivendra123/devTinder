@@ -71,7 +71,7 @@ userRouter.get('/v1/user/connections',auth_request,async(req,res)=>{
     }
     catch(err){
         res.send({
-            message: err.message
+            message: []
         })
     }
 })
@@ -83,8 +83,7 @@ userRouter.get('/v1/users/feed/',auth_request,async(req,res)=>{
     let limit  = parseInt(req.query.limit) || 10
     limit = limit>20?20:limit
 
-    console.log(skip)
-    console.log(limit)
+  
 
     try{
         const hiddenUsersFromFeed = await ConnectionReqModel.find({
@@ -107,6 +106,8 @@ userRouter.get('/v1/users/feed/',auth_request,async(req,res)=>{
         const feed_users = await userModel.find({
             _id:{$nin : Array.from(arr_users)}
         }).select("firstName lastName age gender about skills").skip((skip-1)*10).limit(limit)
+
+        console.log(feed_users)
 
         res.send({
             feed_users

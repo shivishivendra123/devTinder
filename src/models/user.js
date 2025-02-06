@@ -34,6 +34,7 @@ const userSchema = new mongoose.Schema({
     },
     photoURL :{
         type: String,
+        default: 'https://e7.pngegg.com/pngimages/348/800/png-clipart-man-wearing-blue-shirt-illustration-computer-icons-avatar-user-login-avatar-blue-child-thumbnail.png'
     },
     about:{
         type: String,

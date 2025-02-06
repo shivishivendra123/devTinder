@@ -8,23 +8,29 @@ const { profileRouter } = require('./routes/profile')
 const cors = require('cors')
 const { authRouter } = require('./routes/auth')
 
+
 const { requestsRouter } = require('./routes/requests')
 // Route Order matters
 const { Schema } = mongoose
 
 const { connect_db } = require('./config/database')
 const { userRouter } = require('./routes/user')
+const { messageModel } = require('./models/messages')
+const { messageRouter } = require('./routes/chat')
 
 app.use(express.json())
 app.use(cookieParser())
+
 app.use(cors({
     origin:'http://localhost:5173',
     credentials: true
 }))
+
 app.use('/',authRouter)
 app.use('/',profileRouter)
 app.use('/',requestsRouter)
 app.use('/',userRouter)
+app.use('/',messageRouter)
 
 
 

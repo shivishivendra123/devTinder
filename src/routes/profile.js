@@ -19,18 +19,20 @@ profileRouter.get('/v1/profile/view',auth_request,async(req,res)=>{
     
 })
 
-profileRouter.patch('/v1/profile/edit',auth_request,async(req,res)=>{
-    const { userId }  = req.user
+profileRouter.post('/v1/profile/edit',auth_request,async(req,res)=>{
+    const  userId   = req.user
 
     const data  = req.body
 
     ALLOWED_UPDATES = [
         'userID',
         'photoURL',
+        'firstName',
+        'lastName',
         'about',
         'gender',
         'age',
-        'skills'
+        'skills',
     ]
 
     const isUpdateAllowed = Object.keys(data).every((k)=>ALLOWED_UPDATES.includes(k))
@@ -42,7 +44,9 @@ profileRouter.patch('/v1/profile/edit',auth_request,async(req,res)=>{
     }
 
     try{
-        await userModel.findByIdAndUpdate(userId,{ firstName: "Harry" })
+        console.log(userId)
+        console.log(data)
+        await userModel.findByIdAndUpdate(userId,data)
         res.status(200).json({
             message:"User Updated Successfully"
         })
