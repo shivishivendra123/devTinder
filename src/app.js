@@ -7,6 +7,9 @@ const { auth_request } = require('./middlewares/authorize')
 const { profileRouter } = require('./routes/profile')
 const cors = require('cors')
 const { authRouter } = require('./routes/auth')
+const http = require('http')
+const server = http.createServer(app)
+
 
 
 const { requestsRouter } = require('./routes/requests')
@@ -17,6 +20,9 @@ const { connect_db } = require('./config/database')
 const { userRouter } = require('./routes/user')
 const { messageModel } = require('./models/messages')
 const { messageRouter } = require('./routes/chat')
+const { initialSocket } = require('./utils/socketConfig')
+
+initialSocket(server)
 
 app.use(express.json())
 app.use(cookieParser())
@@ -109,7 +115,7 @@ app.get('/v1/deleteUserById',async(req,res)=>{
 })
 
 connect_db().then(()=>{
-    app.listen("4000",()=>{
+    server.listen("4000",()=>{
         console.log("DB connection successful")
         console.log("Listening of port 4000")
     })

@@ -52,13 +52,12 @@ userRouter.get('/v1/user/connections',auth_request,async(req,res)=>{
             if(request.fromUserId._id.equals(user)){
                 return request.toUserId
             }else{
-                console.log('No')
-                console.log(request.fromUserId._id)
+                
                 return request.fromUserId
             }
         })
         
-        console.log(data)
+    
 
         if(requests.length>0){
             res.send({
