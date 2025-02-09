@@ -116,7 +116,7 @@ app.get('/v1/deleteUserById',async(req,res)=>{
 
 connect_db().then(()=>{
     try{
-        server.listen("4000",'0.0.0.0',()=>{
+        server.listen("4000",()=>{
             console.log("DB connection successful")
             console.log("Listening of port 4000")
         })
