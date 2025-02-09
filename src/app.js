@@ -115,12 +115,22 @@ app.get('/v1/deleteUserById',async(req,res)=>{
 })
 
 connect_db().then(()=>{
-    server.listen("4000",()=>{
-        console.log("DB connection successful")
-        console.log("Listening of port 4000")
-    })
-})
+    try{
+        server.listen("4000",()=>{
+            console.log("DB connection successful")
+            console.log("Listening of port 4000")
+        })
+        
+    }
+    catch(err){
+        
+        console.error(err.message)
+    }
+}) 
 .catch((err)=>{
     console.error("This is an error")
 })
 
+
+  
+  
