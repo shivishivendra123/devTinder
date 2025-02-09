@@ -28,7 +28,7 @@ app.use(express.json())
 app.use(cookieParser())
 
 app.use(cors({
-    origin:'http://localhost:5173',
+    origin:'http://10.0.0.177:5173',
     credentials: true
 }))
 
@@ -116,7 +116,7 @@ app.get('/v1/deleteUserById',async(req,res)=>{
 
 connect_db().then(()=>{
     try{
-        server.listen("4000",()=>{
+        server.listen("4000",'0.0.0.0',()=>{
             console.log("DB connection successful")
             console.log("Listening of port 4000")
         })
