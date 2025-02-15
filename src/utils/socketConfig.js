@@ -4,7 +4,7 @@ const { ChatModel } = require('../models/chat')
 const initialSocket = (server) => {
     const io = socket(server, {
         cors: {
-            origin: "http://10.0.0.177:5173"
+            origin: "http://localhost:5173"
         }
     })
 
@@ -49,11 +49,6 @@ const initialSocket = (server) => {
             } catch (err) {
                 console.log(err.message)
             }
-
-
-
-
-
         })
 
     })

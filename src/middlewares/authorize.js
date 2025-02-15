@@ -6,7 +6,7 @@ const auth_request = (req,res,next)=>{
     const cookies = req.cookies
     let se_token = (cookies.token)
 
-    jwt.verify(se_token,'cgajvcjavcuv',(err,user)=>{
+    jwt.verify(se_token,process.env.JWT_SECRET,(err,user)=>{
         if(err){
             res.status(401).json({
                 message:err
