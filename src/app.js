@@ -22,6 +22,7 @@ const { userRouter } = require('./routes/user')
 const { messageModel } = require('./models/messages')
 const { messageRouter } = require('./routes/chat')
 const { initialSocket } = require('./utils/socketConfig')
+const { groupChatRouter } = require('./routes/groupChat')
 
 initialSocket(server)
 
@@ -38,6 +39,7 @@ app.use('/',profileRouter)
 app.use('/',requestsRouter)
 app.use('/',userRouter)
 app.use('/',messageRouter)
+app.use('/',groupChatRouter)
 
 
 

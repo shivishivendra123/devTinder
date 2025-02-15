@@ -10,6 +10,19 @@ const initialSocket = (server) => {
 
 
     io.on("connection", (socket) => {
+
+        socket.on('joinGroupChat',({to})=>{
+            let room_id = to
+            socket.join(room_id)
+            console.log("Joined group with room Id " + room_id)
+        })
+
+        socket.on('sendGroupMessage',({ room_id , message,sender,firstName})=>{
+            console.log(message+room_id+"sender"+sender)
+
+            io.to(room_id).emit('groupMessageRec',{sender_message:sender,mess_rec:message,firstName})
+        })
+
         socket.on('joinChat', ({ user_found, to }) => {
             try {
                 let room_id = [user_found, to].sort().join("_")
