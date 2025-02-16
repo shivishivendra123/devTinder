@@ -1,5 +1,6 @@
 const socket = require('socket.io')
 const { ChatModel } = require('../models/chat')
+const { groupModel } = require('../models/group')
 
 const initialSocket = (server) => {
     const io = socket(server, {
@@ -11,16 +12,31 @@ const initialSocket = (server) => {
 
     io.on("connection", (socket) => {
 
-        socket.on('joinGroupChat',({to})=>{
+        socket.on('joinGroupChat', ({ to }) => {
             let room_id = to
             socket.join(room_id)
             console.log("Joined group with room Id " + room_id)
         })
 
-        socket.on('sendGroupMessage',({ room_id , message,sender,firstName})=>{
-            console.log(message+room_id+"sender"+sender)
+        socket.on('sendGroupMessage', async ({ room_id, message, sender, firstName }) => {
+            console.log(message + room_id + "sender" + sender)
 
-            io.to(room_id).emit('groupMessageRec',{sender_message:sender,mess_rec:message,firstName})
+            try {
+                const group_chat_obj = await groupModel.findById(room_id)
+
+                group_chat_obj.text.push({
+                    senderId: sender,
+                    text: message
+                })
+
+                await group_chat_obj.save()
+            }
+            catch (err) {
+                console.log(err.message)
+            }
+
+
+            io.to(room_id).emit('groupMessageRec', { sender_message: sender, mess_rec: message, firstName })
         })
 
         socket.on('joinChat', ({ user_found, to }) => {
@@ -44,7 +60,7 @@ const initialSocket = (server) => {
                 if (!query) {
                     query = new ChatModel({
                         participants: [user_found, to],
-                        text:[]
+                        text: []
                     })
                 }
                 query.text.push({
