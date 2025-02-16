@@ -19,7 +19,7 @@ messageRouter.get("/v1/requestAllChats/:user2",auth_request,async(req,res)=>{
             }     
         }).populate("text.senderId","firstName")
 
-        console.log(chat)
+        // console.log(chat)
 
         res.status(200).json({
             chat:chat.text

@@ -70,8 +70,8 @@ requestsRouter.post('/v1/request/review/:status/:requestId',auth_request,async(r
 
     const { status , requestId } = req.params
 
-    console.log(userId)
-    console.log(requestId)
+    // console.log(userId)
+    // console.log(requestId)
     try{
         const findConnectionRequest = await ConnectionReqModel.findOne({ _id : requestId , toUserId : userId})
         if(findConnectionRequest && findConnectionRequest.status == 'interested'){

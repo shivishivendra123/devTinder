@@ -1,6 +1,9 @@
 const socket = require('socket.io')
 const { ChatModel } = require('../models/chat')
 const { groupModel } = require('../models/group')
+const amqp = require('amqplib');
+const { sendNotification } = require('./producer');
+const redisClient = require('./redisConfig');
 
 const initialSocket = (server) => {
     const io = socket(server, {
@@ -9,8 +12,50 @@ const initialSocket = (server) => {
         }
     })
 
+    async function setupRabbitMQ() {
+        try {
+            const connection = await amqp.connect('amqp://localhost');
+            const channel = await connection.createChannel();
+            const queue = 'notifications';
+    
+            // Create a queue (if it doesn't exist)
+            await channel.assertQueue(queue, { durable: false });
+    
+            console.log('Waiting for messages...');
+    
+            // Consume messages from the queue
+            channel.consume(queue, async(message) => {
+                if (message !== null) {
+                    const notification = JSON.parse(message.content.toString());
+                    console.log('Received notification:', notification);
+                
+
+                   const status =  await redisClient.get(`user:${notification.userId}:status`)
+                   if(status=='online'){
+                        io.to(notification.userId).emit(notification.type, {notification:notification.data});
+                   }
+                    channel.ack(message);
+                }
+            });
+        } catch (error) {
+            console.error('Error setting up RabbitMQ:', error);
+        }
+    }
+    
+    setupRabbitMQ()
 
     io.on("connection", (socket) => {
+
+        socket.on('joinNotificationService',({room})=>{
+            socket.join(room)
+            console.log("Joined notication"+room)
+        })
+
+        socket.on('sentInterestedRequest',({message,type,id})=>{
+            console.log(message+type+id)
+            sendNotification(id, type, message)
+        })
+
 
         socket.on('joinGroupChat', ({ to }) => {
             let room_id = to

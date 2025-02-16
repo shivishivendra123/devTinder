@@ -2,9 +2,9 @@ const express = require('express')
 const { auth_request } = require('../middlewares/authorize')
 const { ConnectionReqModel } = require('../models/connectionRequest')
 const { userModel } = require('../models/user')
+const redisClient = require('../utils/redisConfig')
 
 const userRouter = express.Router()
-
 
 userRouter.get('/v1/user/connections/received',auth_request,async(req,res)=>{
 
@@ -76,8 +76,14 @@ userRouter.get('/v1/user/connections',auth_request,async(req,res)=>{
 })
 
 userRouter.get('/v1/users/feed/',auth_request,async(req,res)=>{
-    const user = req.user
 
+
+    const user = req.user
+    redisClient.set(`user:${user}:status`,'online')
+    .then((data)=>console.log(data))
+   .catch((err)=>console.log(err))
+     
+     
     const skip  = parseInt(req.query.page) || 1
     let limit  = parseInt(req.query.limit) || 10
     limit = limit>20?20:limit
@@ -95,7 +101,7 @@ userRouter.get('/v1/users/feed/',auth_request,async(req,res)=>{
         const hidenUsers = new Set()
 
         hiddenUsersFromFeed.forEach(huser => {
-            console.log(huser.toUserId._id.toString())
+            // console.log(huser.toUserId._id.toString())
             hidenUsers.add(huser.toUserId._id.toString())
             hidenUsers.add(huser.fromUserId._id.toString())
         });
@@ -106,7 +112,7 @@ userRouter.get('/v1/users/feed/',auth_request,async(req,res)=>{
             _id:{$nin : Array.from(arr_users)}
         }).select("firstName lastName age gender about skills").skip((skip-1)*10).limit(limit)
 
-        console.log(feed_users)
+        // console.log(feed_users)
 
         res.send({
             feed_users
