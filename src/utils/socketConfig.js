@@ -32,7 +32,8 @@ const initialSocket = (server) => {
 
                    const status =  await redisClient.get(`user:${notification.userId}:status`)
                    if(status=='online'){
-                        io.to(notification.userId).emit(notification.type, {notification:notification.data});
+                        console.log("online")
+                        io.to(notification.userId).emit('connection', {notification:notification.data});
                    }
                     channel.ack(message);
                 }
@@ -56,6 +57,19 @@ const initialSocket = (server) => {
             sendNotification(id, type, message)
         })
 
+        socket.on('receivedchat',({userId,firstName,text})=>{
+            console.log(userId)
+            console.log(firstName)
+            console.log(text)
+            sendNotification(userId,"notification",firstName +" sent you a message: " + text)
+        })
+
+        socket.on('requestAccept',({to_user,accept_by})=>{
+            console.log(to_user._id)
+            console.log(accept_by)
+            console.log(to_user+accept_by)
+            sendNotification(to_user._id,'notification',accept_by.firstName + " accepted your connection request")
+        })
 
         socket.on('joinGroupChat', ({ to }) => {
             let room_id = to
