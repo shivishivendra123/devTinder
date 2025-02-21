@@ -5,24 +5,29 @@ const amqp = require('amqplib');
 const { sendNotification } = require('./producer');
 const redisClient = require('./redisConfig');
 const { sendNotificationGroup } = require('./groupMessage');
+const { notifyModel } = require('../models/notification');
 
 const checkForGroupUsers = async (roomId) => {
     const group = await groupModel.findById(roomId)
 
     let online_usrs = []
-    if(group){
-        online_usrs = await Promise.all(group?.participants.map(async(value,index)=>{
+    let offline_urs = []
+    if (group) {
+        online_usrs = await Promise.all(group?.participants.map(async (value, index) => {
             const status = await redisClient.get(`user:${value}:status`)
             if (status == 'online') {
                 return value
-            
-            }else return null
+
+            } else {
+                offline_urs.push(value)
+                return null
+            }
         }))
     }
-    
+
     const filteredOnlineUsers = online_usrs.filter(user => user !== null);
-    
-    return [filteredOnlineUsers,group?.name]
+
+    return [filteredOnlineUsers, group?.name, offline_urs]
 
 }
 
@@ -46,16 +51,35 @@ const initialSocket = (server) => {
 
             // Consume messages from the queue
             channel.consume(queue, async (message) => {
-                if(message!=null){
+                if (message != null) {
                     obj = JSON.parse(message.content.toString())
                     console.log(obj.roomId)
-                    const [online_users,name] = await checkForGroupUsers(obj.roomId)
-                    
+                    const [online_users, name, offline_urs] = await checkForGroupUsers(obj.roomId)
+
                     online_users.forEach(element => {
                         console.log(obj)
-                        io.to(element.toString()).emit('connection', { notification: `Message from ${name} group: ${obj.data }`});
+                        io.to(element.toString()).emit('connection', { notification: `Message from ${name} group: ${obj.data}` });
                     });
-                }        
+                    offline_urs.forEach(async (element) => {
+                        console.log(element)
+                        try {
+                            const notication_to_save = new notifyModel({
+                                userId: element,
+                                message: `Message from ${name} group: ${obj.data}`,
+                                status: 'unseen'
+                            })
+                            await notication_to_save.save()
+                        } catch (err) {
+                            console.log(err.message)
+                        }
+                    })
+                }
+            });
+            process.on('SIGINT', async () => {
+                console.log("Closing RabbitMQ connection...");
+                await channel.close();
+                await connection.close();
+                process.exit(0);
             });
             channel.ack(message);
         } catch (error) {
@@ -87,8 +111,29 @@ const initialSocket = (server) => {
                     if (status == 'online') {
                         console.log("online")
                         io.to(notification.userId).emit('connection', { notification: notification.data });
+                    } else {
+                        try {
+                            const notication_to_save = new notifyModel({
+                                userId: notification.userId,
+                                message: notification.data,
+                                status: 'unseen'
+                            })
+                            await notication_to_save.save()
+                        } catch (err) {
+                            console.log(err.message)
+                        }
                     }
+
+                    // Handle process exit
+                    
+
                     channel.ack(message);
+                    process.on('SIGINT', async () => {
+                        console.log("Closing RabbitMQ connection...");
+                        await channel.close();
+                        await connection.close();
+                        process.exit(0);
+                    });
                 }
             });
         } catch (error) {
