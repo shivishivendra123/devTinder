@@ -1,0 +1,14 @@
+{
+    name
+    _id
+    participants:[
+        {
+            _id,
+            joined_at,
+            role
+        }
+    ]
+    messages:[]
+    created_by:
+    admins:[]
+}

@@ -1,19 +1,44 @@
 const express = require('express')
-const { groupModel } = require('../models/group')
+const { groupModel, memberSchema } = require('../models/group')
 const { auth_request } = require('../middlewares/authorize')
 const groupChatRouter = express.Router()
 
 groupChatRouter.post("/v1/group/createGroup", auth_request, async (req, res) => {
+    const created_by = req.body.created_by
     const groupName = req.body.groupName
     const participants = req.body.participants
 
-    console.log(groupName)
+    console.log(participants)
 
     try {
+
+        member_arr = participants.map((part,idx)=>{
+            if(part==created_by){
+                return (
+                    {
+                        userId:part,
+                        role:"admin"
+                    }
+                )
+            }
+            else{
+                return (
+                    {
+                        userId:part,
+                        role:"member"
+                    }
+                )
+            }
+        })
+       
+        console.log(member_arr)
+
         const groupCreate = new groupModel({
             name: groupName,
-            participants: participants,
-            text: []
+            participants: member_arr,
+            text: [],
+            created_by: created_by,
+            admins:[created_by]
         })
 
         await groupCreate.save()
@@ -36,7 +61,7 @@ groupChatRouter.get('/v1/getMyGroups', auth_request, async (req, res) => {
 
     try {
         const query = await groupModel.find({
-            participants: { $in: [user] }
+            "participants.userId":{$in : user}
         })
 
         console.log(query)
@@ -71,6 +96,25 @@ groupChatRouter.get('/v1/getMyGroupChat/:roomId', auth_request, async (req, res)
             chats: []
         })
     }
+})
+
+groupChatRouter.get('/v1/getGroupInfo/:roomId', async(req,res)=>{
+    const gid = req.params.roomId
+    
+    try{
+        const groupInfo = await groupModel.findById(gid).populate("created_by","firstName").populate("participants.userId","firstName")
+        res.status(200).json({
+            query:groupInfo
+        })
+    }catch(err){
+        res.status(200).json({
+            message:err.message
+        })
+    }
+
+   
+
+    
 })
 
 module.exports = {

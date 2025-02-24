@@ -14,7 +14,7 @@ const checkForGroupUsers = async (roomId) => {
     let offline_urs = []
     if (group) {
         online_usrs = await Promise.all(group?.participants.map(async (value, index) => {
-            const status = await redisClient.get(`user:${value}:status`)
+            const status = await redisClient.get(`user:${value.userId}:status`)
             if (status == 'online') {
                 return value
 
@@ -26,7 +26,7 @@ const checkForGroupUsers = async (roomId) => {
     }
 
     const filteredOnlineUsers = online_usrs.filter(user => user !== null);
-
+    // console.log(filteredOnlineUsers)
     return [filteredOnlineUsers, group?.name, offline_urs]
 
 }
@@ -58,13 +58,13 @@ const initialSocket = (server) => {
 
                     online_users.forEach(element => {
                         console.log(obj)
-                        io.to(element.toString()).emit('connection', { notification: `Message from ${name} group: ${obj.data}` });
+                        io.to(element.userId.toString()).emit('connection', { notification: `Message from ${name} group: ${obj.data}` });
                     });
                     offline_urs.forEach(async (element) => {
                         console.log(element)
                         try {
                             const notication_to_save = new notifyModel({
-                                userId: element,
+                                userId: element.userId,
                                 message: `Message from ${name} group: ${obj.data}`,
                                 status: 'unseen'
                             })
