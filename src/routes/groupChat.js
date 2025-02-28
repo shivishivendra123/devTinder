@@ -117,6 +117,31 @@ groupChatRouter.get('/v1/getGroupInfo/:roomId', async(req,res)=>{
     
 })
 
+
+groupChatRouter.post('/v1/leaveGroup/:groupId',auth_request,async(req,res)=>{
+    const user = req.user
+    const groupId = req.params.groupId
+
+    console.log(groupId)
+
+    try{
+        const group = await groupModel.findById(groupId)
+        
+        let members = group.participants.filter(member=>member.userId!=user)
+
+        group.participants = members
+
+        await group.save()
+        res.status(200).json({
+            response: group
+        })
+    }catch(err){
+        res.status(200).json({
+            response: []
+        })
+    }    
+})
+
 module.exports = {
     groupChatRouter
 }
