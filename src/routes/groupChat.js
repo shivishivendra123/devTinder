@@ -142,6 +142,28 @@ groupChatRouter.post('/v1/leaveGroup/:groupId',auth_request,async(req,res)=>{
     }    
 })
 
+groupChatRouter.post('/v1/kickOutUser',auth_request, async(req,res)=>{
+    const user = req.user
+    const { member_id, groupId } = req.body
+
+    const group = await groupModel.findById(groupId)
+
+    if(group.admins.includes(user)){
+       members = group.participants.filter(member=>member.userId!=member_id)
+       group.participants = members
+       console.log("Hii")
+       console.log(members)
+       await group.save()
+    }
+
+    // console.log(group)
+
+    res.status(200).json({
+        message:"Kicked the user"
+    })
+
+})
+
 module.exports = {
     groupChatRouter
 }
