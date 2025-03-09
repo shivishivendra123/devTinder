@@ -164,6 +164,41 @@ groupChatRouter.post('/v1/kickOutUser',auth_request, async(req,res)=>{
 
 })
 
+groupChatRouter.post('/v1/makeAdmin',auth_request,async(req,res)=>{
+    const user = req.user
+    const { member_id, groupId } = req.body
+
+
+    try{
+        const group = await groupModel.findById(groupId)
+
+    if(group.admins.includes(user)){
+        const members = group.participants.map((member)=>{
+            if(member.userId == member_id){
+                member.role = 'admin'
+                return member
+            }else{
+                return member
+            }
+        })
+
+        group.participants = members
+        group.admins.push(member_id)
+
+        await group.save()
+
+        res.status(200).json({
+            message:'Made Amdin'
+        })
+    }
+    }catch(err){
+        res.status(500).json({
+            message:err.message
+        })
+    }
+
+})
+
 module.exports = {
     groupChatRouter
 }
